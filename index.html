@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Acciaccatiello’s family — Platformer (PWA v9)</title>
+  <title>Acciaccatiello’s family — The Game </title>
   <style>
     * { box-sizing: border-box; }
     html, body { margin:0; padding:0; height:100%; background:#0a0f1c; color:#e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
@@ -32,12 +32,11 @@
     .pad .btnT:active { filter: brightness(1.2); }
     .pad .left { left: 0; bottom: 58px; }
     .pad .right { left: 110px; bottom: 58px; }
-    /* Actions cluster: ★ sopra, A e B affiancati (no overlap) */
-    .actions { position: absolute; right: 22px; bottom: 96px; width: 300px; height: 260px; pointer-events: auto; }
+    .actions { position: absolute; right: 22px; bottom: 96px; width: 260px; height: 210px; pointer-events: auto; }
     .actions .btnT { position: absolute; width: 76px; height: 76px; border-radius: 50%; background: rgba(15,23,42,.65); border:1px solid #334155; }
-    .actions .jump   { right:   0px; bottom: 60px; }   /* A */
-    .actions .attack { right:  96px; bottom: 60px; }   /* B, vicino ad A */
-    .actions .power  { right:  48px; bottom: 150px; width:76px; height:76px; } /* ★ sopra, centrata tra A e B */
+    .actions .jump { right: 0; bottom: 64px; }
+    .actions .attack { right: 148px; bottom: 16px; }
+    .actions .power { right: 46px; bottom: 134px; width:70px; height:70px; }
     .actions .jump::after { content: 'A'; position: absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#e5e7eb; font-weight:700; }
     .actions .attack::after { content: 'B'; position: absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#e5e7eb; font-weight:700; }
     .actions .power::after { content: '★'; position: absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fbbf24; font-weight:900; }
@@ -64,9 +63,6 @@
     /* Cutscene */
     #cutscene .panel { text-align:center; }
     #assistBanner { position: fixed; right: 10px; top: 10px; background: rgba(2,6,23,.75); border:1px solid #334155; border-radius:10px; padding:6px 8px; font-weight:800; }
-    .vignette { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:12px; }
-    .vignette canvas { width:96px; height:96px; image-rendering: pixelated; border:1px solid #334155; border-radius:8px; background:#0b1220; }
-    .vs { font-weight:900; font-size:24px; letter-spacing:1px; color:#fbbf24; }
   </style>
 </head>
 <body>
@@ -88,10 +84,10 @@
 
   <div id="menu">
     <div class="panel">
-      <h1>Acciaccatiello’s family — Platformer (v9)</h1>
+      <h1>Acciaccatiello’s family — The Game</h1>
       <div class="row">
         <div>
-          <p>Tap <b>Inizia</b> per scegliere il protagonista. Doppio salto di base, power‑up nei blocchi “?”, checkpoint e boss con pattern. Monete con valore decrescente, musiche 8‑bit per livello e boss.</p>
+          <p>Tap <b>Inizia</b> per scegliere il protagonista. Doppio salto base, power‑up nei blocchi “?”, checkpoint e boss con pattern. </p>
           <p style="opacity:.8">Controlli: ←/→ muovi • Z/Spazio salta (x2) • X spara (con Fire) • <b>★</b> Assist (quando pronto) o Dash (se power Dash attivo) • P pausa • R riparti dal checkpoint</p>
         </div>
         <div class="toggle">
@@ -110,7 +106,7 @@
         <div class="card">
           <canvas id="selPortrait" class="portrait" width="96" height="96"></canvas>
           <div>
-            <div style="font-weight:800; font-size:18px;" id="selName">Elly</div>
+            <div style="font-weight:800; font-size:18px;" id="selName">Elly NonScorreggi</div>
             <div id="selDesc" style="opacity:.8; margin:6px 0 10px 0;">Equilibrata. HP 6. Doppio salto di base.</div>
             <div class="opt">
               <label for="diff">Difficoltà:</label>
@@ -158,11 +154,6 @@
 
   <div id="cutscene">
     <div class="panel">
-      <div class="vignette">
-        <canvas id="vigL" width="96" height="96"></canvas>
-        <div class="vs">VS</div>
-        <canvas id="vigR" width="96" height="96"></canvas>
-      </div>
       <h2 id="cutTitle">—</h2>
       <p id="cutText" style="font-size:16px; line-height:1.35; white-space:pre-line; margin-bottom:12px;"></p>
       <button class="btn" id="cutNext">Avanti ▶</button>
@@ -211,7 +202,7 @@
     const msg=document.getElementById('msg'), dialogueBox=document.getElementById('dialogue'), touchLayer=document.getElementById('touch'), musicToggle=document.getElementById('musicToggle'), musicLamp=document.getElementById('musicLamp');
     const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn'), selPortrait=document.getElementById('selPortrait'), selName=document.getElementById('selName'), selDesc=document.getElementById('selDesc'), playName=document.getElementById('playName'), diffSel=document.getElementById('diff');
     const timeNowEl=document.getElementById('timeNow'), timeBestEl=document.getElementById('timeBest'), timeBonusEl=document.getElementById('timeBonus'), clearScoreEl=document.getElementById('clearScore'), finalScoreEl=document.getElementById('finalScore'), hiList=document.getElementById('hiList'), cele=document.getElementById('cele');
-    const cutTitle=document.getElementById('cutTitle'), cutText=document.getElementById('cutText'), cutNext=document.getElementById('cutNext'), vigL=document.getElementById('vigL'), vigR=document.getElementById('vigR');
+    const cutTitle=document.getElementById('cutTitle'), cutText=document.getElementById('cutText'), cutNext=document.getElementById('cutNext');
 
     // ---------- Input with edge detection ----------
     const key = { left:false, right:false, jump:false, attack:false, power:false, any:false, jumpEdge:false, powerEdge:false };
@@ -255,12 +246,60 @@
     // ---------- Portraits ----------
     function makePortrait(painter){ const c=document.createElement('canvas'); c.width=16; c.height=16; const x=c.getContext('2d'); painter(x); return c; }
     const P=(x,y,w,h,c,ctx)=>{ ctx.fillStyle=c; ctx.fillRect(x,y,w,h); };
-    const portraitElly=makePortrait((x)=>{ P(2,2,12,6,'#7c3aed',x); P(3,3,10,8,'#9f7aea',x); P(5,6,6,6,'#f1c27d',x); P(6,8,1,1,'#000',x); P(9,8,1,1,'#000',x); P(6,10,4,1,'#e11d48',x); P(4,12,8,2,'#fb923c',x); });
+    const portraitElly = makePortrait((x)=>{
+      // capelli rossi
+      P(2,2,12,6,'#dc2626',x);
+      P(3,3,10,8,'#f87171',x);
+      // volto + dettagli
+      P(5,6,6,6,'#f1c27d',x);
+      P(6,8,1,1,'#000',x); P(9,8,1,1,'#000',x);
+      P(6,10,4,1,'#e11d48',x);
+      P(4,12,8,2,'#fb923c',x);
+    });
     const portraitDog=makePortrait((x)=>{ P(2,2,4,3,'#5c3a18',x); P(10,2,4,3,'#5c3a18',x); P(3,4,10,8,'#b07943',x); P(6,7,1,1,'#000',x); P(9,7,1,1,'#000',x); P(7,9,2,1,'#111',x); P(7,10,2,1,'#ef4444',x); });
     const portraitPepp=makePortrait((x)=>{ P(4,2,8,3,'#0ea5e9',x); P(4,5,8,6,'#f1c27d',x); P(5,7,1,1,'#000',x); P(10,7,1,1,'#000',x); P(6,9,4,1,'#0f172a',x); P(5,12,6,2,'#3b82f6',x); });
-    const portraitPinni=makePortrait((x)=>{ P(3,3,10,5,'#16a34a',x); P(4,6,8,6,'#f1c27d',x); P(5,8,1,1,'#000',x); P(10,8,1,1,'#000',x); P(6,10,4,1,'#000',x); P(5,12,6,2,'#10b981',x); });
+    const portraitPinni = makePortrait((x)=>{
+      // capelli biondi
+      P(3,3,10,3,'#f59e0b',x);
+      P(3,6,10,2,'#fde68a',x);
+      // volto + dettagli
+      P(4,6,8,6,'#f1c27d',x);
+      P(5,8,1,1,'#000',x); P(10,8,1,1,'#000',x);
+      P(6,10,4,1,'#000',x);
+      // outfit verde come prima
+      P(5,12,6,2,'#10b981',x);
+    });
     const portraitIda=makePortrait((x)=>{ P(3,3,10,5,'#ef4444',x); P(4,6,8,6,'#f1c27d',x); P(5,8,1,1,'#000',x); P(10,8,1,1,'#000',x); P(6,10,4,1,'#e11d48',x); P(5,12,6,2,'#f87171',x); });
-    const portraits={"Elly":portraitElly,"EvilSattola":portraitDog,"Pepp SenzAnalisi":portraitPepp,"Pinni SenzaFiltri":portraitPinni,"Ida Linfomita":portraitIda};
+    const portraits={"Elly NonScorreggi":portraitElly,"EvilSattola":portraitDog,"Pepp SenzAnalisi":portraitPepp,"Pinni SenzaFiltri":portraitPinni,"Ida Linfomita":portraitIda};
+
+        // Ritratti assist: chef (GigiKitchen) e Bero con lumino (BeroSpero)
+    const portraitChef = makePortrait((x)=>{
+      // cappello da chef
+      P(4,1,8,3,'#e5e7eb',x); P(5,4,6,1,'#e5e7eb',x);
+      // viso
+      P(5,5,6,6,'#f1c27d',x);
+      P(6,7,1,1,'#000',x); P(9,7,1,1,'#000',x);
+      // baffo/sorriso
+      P(6,9,4,1,'#0f172a',x);
+      // giacca
+      P(4,11,8,3,'#94a3b8',x);
+    });
+
+    const portraitBero = makePortrait((x)=>{
+      // cappuccio scuro
+      P(3,2,10,3,'#334155',x);
+      // viso
+      P(4,5,8,6,'#f1c27d',x);
+      P(5,7,1,1,'#000',x); P(10,7,1,1,'#000',x);
+      // lumino (candela) a destra
+      P(12,8,2,4,'#eab308',x);     // fiamma
+      P(12,12,2,2,'#9ca3af',x);    // base
+      // mantello
+      P(4,11,8,3,'#1f2937',x);
+    });
+    
+      portraits["GigiKitchen"] = portraitChef;
+      portraits["BeroSpero"]   = portraitBero;
 
     // ---------- Levels ----------
     const LEVELS_BASE=[
@@ -269,7 +308,7 @@
       { id:3, boss:"Pepp SenzAnalisi", color:"#3b82f6", hp:7, loc:"Portici", bg:"portici", theme:2, pattern:"chaos" },
       { id:4, boss:"Ida Linfomita", color:"#ef4444", hp:8, loc:"Praia a Mare", bg:"praia", theme:3, pattern:"shield" },
     ];
-    const TRIeste={ id:0, boss:null, color:"#a78bfa", hp:0, loc:"Trieste", bg:"trieste", theme:4, pattern:null };
+    const TRIeste={ id:0, boss:"Elly NonScorreggi", color:"#a78bfa", hp:0, loc:"Trieste", bg:"trieste", theme:4, pattern:"chaos" };
 
     // ---------- Music ----------
     let audioCtx=null, music=null;
@@ -292,11 +331,11 @@
 
     // ---------- Game State ----------
     const GRAV=820, MOVE_SPEED=120, JUMP_VY=-250;
-    const player={ who:'Elly', portrait:'Elly', x:20,y:0,w:10,h:14, vx:0,vy:0, onGround:false, hp:6, hpMax:6, facing:1, iFrames:0, maxJumps:2, jumpsLeft:2, walkT:0, respX:20, respY:0 };
+    const player={ who:'Elly NonScorreggi', portrait:'Elly NonScorreggi', x:20,y:0,w:10,h:14, vx:0,vy:0, onGround:false, hp:6, hpMax:6, facing:1, iFrames:0, maxJumps:2, jumpsLeft:2, walkT:0, respX:20, respY:0 };
     const powers={ extraJump:0, dash:0, fire:0, inv:0 };
     let allies=[], levelIndex=0, solids=[], platforms=[], blocks=[], items=[], projectiles=[], bossProj=[], mobs=[];
     let levelW=2400, boss=null, cameraX=0, state='menu', last=performance.now(), bgKey='vesuvio', currentTheme=0, score=0;
-    let selectedStart='Elly', buildSeq=[], levelStartTime=0, bossPhase=false, checkpoints=[], goal=null, pausedFlag=false;
+    let selectedStart='Elly NonScorreggi', buildSeq=[], levelStartTime=0, bossPhase=false, checkpoints=[], goal=null, pausedFlag=false;
 
     // Difficulty
     let DIFF='normal', DMG=1, BOSS_HP_MUL=1.0, MOB_COUNT=5, MOB_SPEED=40, ASSIST_NEED=25;
@@ -309,19 +348,51 @@
       assistMeterEl.textContent = `0/${ASSIST_NEED}`;
     }
 
-    // Assist
+    // Assist system
     let assistCoins=0, assistReady=false, assistHero=0, assistFlash=0; // 0=GigiKitchen,1=BeroSpero
-    function addAssistCoins(n){ assistCoins = Math.min(ASSIST_NEED, assistCoins + n); if (assistCoins>=ASSIST_NEED){ assistReady=true; assistReadyEl.style.display='inline'; showMsg('Assist pronto! Premi ★', 1.2); } assistMeterEl.textContent = `${assistCoins}/${ASSIST_NEED}`; }
+    let assistAnimT = 0, assistAnimDur = 1.4, assistAnimPulse = 0;
+    function addAssistCoins(n){
+      assistCoins = Math.min(ASSIST_NEED, assistCoins + n);
+      if (assistCoins>=ASSIST_NEED){ assistReady=true; assistReadyEl.style.display='inline'; showMsg('Assist pronto! Premi ★', 1.2); }
+      assistMeterEl.textContent = `${assistCoins}/${ASSIST_NEED}`;
+    }
     function currentAssistName(){ return assistHero===0 ? 'GigiKitchen' : 'BeroSpero'; }
     function flipAssist(){ assistHero = (assistHero===0?1:0); assistWhoEl.textContent = currentAssistName(); }
     assistWhoEl.textContent = currentAssistName();
+    
+
     function triggerAssist(){
       if (!assistReady) return;
-      const left = cameraX, right = cameraX + W; let wiped=0;
-      mobs.forEach(m=>{ if (m.alive && m.x+m.w>left && m.x<right){ m.alive=false; wiped++; addScore(15); } });
-      if (boss){ const cut = Math.max(1, Math.ceil(boss.hpMax * 0.25)); boss.hp = Math.max(1, boss.hp - cut); }
-      assistFlash = 0.6; sfx('assist'); showMsg(currentAssistName() + ' interviene! ('+ wiped +' nemici colpiti)', 1.5);
-      assistCoins=0; assistReady=false; assistReadyEl.style.display='none'; assistMeterEl.textContent=`0/${ASSIST_NEED}`; flipAssist();
+
+      // colpisce i mob visibili
+      const left = cameraX, right = cameraX + W;
+      let wiped = 0;
+      mobs.forEach(m=>{
+        if (m.alive && m.x+m.w>left && m.x<right){
+          m.alive=false; wiped++; addScore(15);
+        }
+      });
+
+      // taglio 25% al boss
+      if (boss){
+        const cut = Math.max(1, Math.ceil(boss.hpMax * 0.25));
+        boss.hp = Math.max(1, boss.hp - cut);
+      }
+
+      // effetti
+      assistFlash = 0.6;
+      sfx('assist');
+      showMsg(currentAssistName() + ' interviene!', 1.5);
+
+      // avvio animazione overlay
+      assistAnimT = assistAnimDur;
+      assistAnimPulse = 0;
+
+      // reset/alternanza
+      assistCoins = 0; assistReady=false;
+      assistReadyEl.style.display='none';
+      assistMeterEl.textContent = `0/${ASSIST_NEED}`;
+      flipAssist();
     }
 
     // Jump helpers
@@ -330,29 +401,19 @@
     // Dialogue and cutscenes
     let dialogueQueue=[], dialogueTimer=0, dialogueActive=false;
     function say(lines){ dialogueQueue=lines.slice(); dialogueTimer=0; dialogueActive=true; dialogueBox.style.display='block'; dialogueBox.textContent=dialogueQueue.shift(); }
-    function updateDialogue(dt){ if(!dialogueActive) return false; dialogueTimer+=dt; if(dialogueTimer>2.0){ dialogueTimer=0; if(dialogueQueue.length){ dialogueBox.textContent=dialogueQueue.shift(); } else { dialogueActive=false; dialogueBox.style.display='none'; } } return dialogueActive; }
+    function updateDialogue(dt){ if(!dialogueActive) return false; dialogueTimer+=dt; if(dialogueTimer>5.0){ dialogueTimer=0; if(dialogueQueue.length){ dialogueBox.textContent=dialogueQueue.shift(); } else { dialogueActive=false; dialogueBox.style.display='none'; } } return dialogueActive; }
 
-    let cutQueue=[], cutTitleTxt='', vigL=document.getElementById('vigL'), vigR=document.getElementById('vigR');
-    function setVignette(leftName, rightName){
-      const L=portraits[leftName] || portraits['Elly']; const R=portraits[rightName] || null;
-      const xL=vigL.getContext('2d'); xL.imageSmoothingEnabled=false; xL.clearRect(0,0,96,96); xL.drawImage(L,0,0,16,16, 20,20,56,56);
-      const xR=vigR.getContext('2d'); xR.imageSmoothingEnabled=false; xR.clearRect(0,0,96,96);
-      if (R) xR.drawImage(R,0,0,16,16, 20,20,56,56);
-      else { xR.fillStyle='#0b1220'; xR.fillRect(0,0,96,96); xR.fillStyle='#fbbf24'; xR.font='bold 14px monospace'; xR.textAlign='center'; xR.textBaseline='middle'; xR.fillText('GO!', 48, 48); }
-    }
-    function queueCutscene(title, lines, leftName, rightName){
-      setVignette(leftName, rightName);
-      cutTitleTxt=title; cutQueue=lines.slice(); pausedFlag=true; cutscene.style.display='flex'; cutTitle.textContent=title; cutText.textContent=cutQueue.shift()||'';
-    }
+    let cutQueue=[], cutTitleTxt='';
+    function queueCutscene(title, lines){ cutTitleTxt=title; cutQueue=lines.slice(); pausedFlag=true; cutscene.style.display='flex'; cutTitle.textContent=title; cutText.textContent=cutQueue.shift()||''; }
     document.getElementById('cutNext').addEventListener('click', ()=>{
       if (cutQueue.length){ cutText.textContent = cutQueue.shift(); }
       else { cutscene.style.display='none'; pausedFlag=false; }
     });
 
     // Character select
-    const roster=[ {name:'Elly',hp:6,desc:'Equilibrata. HP 6. Doppio salto di base.'}, {name:'EvilSattola',hp:7,desc:'Scatto e resistenza. HP 7.'}, {name:'Pinni SenzaFiltri',hp:6,desc:'Precisione. HP 6.'}, {name:'Pepp SenzAnalisi',hp:6,desc:'Impulsivo. HP 6.'}, {name:'Ida Linfomita',hp:7,desc:'Tenacia. HP 7.'} ];
+    const roster=[ {name:'Elly NonScorreggi',hp:6,desc:'Disequilibrata. Combatte il lattosio, mangiandone ancora di piu. HP 6.'}, {name:'EvilSattola',hp:10,desc:'Scattattante cane molesto, entra di orecchio floscio e si mette sotto al letto. HP 10.'}, {name:'Pinni SenzaFiltri',hp:6,desc:'Precisione e cazzimma, anche senza rene filtrante è una persona importante. HP 6.'}, {name:'Pepp SenzAnalisi',hp:8,desc:'Impulsivo e coraggioso, le analisi scappano di fronte alla sua schiacciata pallavolistica. HP 8.'}, {name:'Ida Linfomita',hp:7,desc:'Tenacia e frittura sono le sue forze portanti, riesce a combattere tutti i mali con le sue parmigiane. HP 7.'} ];
     let selIndex=0;
-    function renderSelectCard(){ const r=roster[selIndex]; selName.textContent=r.name; selDesc.textContent=r.desc; playName.textContent=r.name; const cx=selPortrait.getContext('2d'); cx.imageSmoothingEnabled=false; cx.clearRect(0,0,96,96); const p=portraits[r.name.includes('Elly')?'Elly':r.name]; cx.drawImage(p,0,0,16,16,20,20,56,56); }
+    function renderSelectCard(){ const r=roster[selIndex]; selName.textContent=r.name; selDesc.textContent=r.desc; playName.textContent=r.name; const cx=selPortrait.getContext('2d'); cx.imageSmoothingEnabled=false; cx.clearRect(0,0,96,96); const p=portraits[r.name.includes('Elly NonScorreggi')?'Elly NonScorreggi':r.name]; cx.drawImage(p,0,0,16,16,20,20,56,56); }
     prevBtn.addEventListener('click', ()=>{ selIndex=(selIndex-1+roster.length)%roster.length; renderSelectCard(); });
     nextBtn.addEventListener('click', ()=>{ selIndex=(selIndex+1)%roster.length; renderSelectCard(); });
     renderSelectCard();
@@ -375,18 +436,7 @@
     function togglePause(){ pausedFlag=!pausedFlag; paused.style.display=pausedFlag?'flex':'none'; }
     function pauseGame(v){ pausedFlag=!!v; paused.style.display=pausedFlag?'flex':'none'; }
 
-    function buildSequence(){ const seq=[]; if(selectedStart!=='Elly') seq.push(TRIeste); LEVELS_BASE.forEach(L=>seq.push(L)); return seq; }
-
-    // Difficulty application
-    let BOSS_HP_MUL=1.0, MOB_COUNT=5, MOB_SPEED=40, ASSIST_NEED=25, DMG=1;
-    function applyDifficulty(){
-      DMG = (DIFF==='hard')?2:1;
-      BOSS_HP_MUL = (DIFF==='easy')?0.8 : (DIFF==='hard')?1.3 : 1.0;
-      MOB_COUNT = (DIFF==='easy')?3 : (DIFF==='hard')?8 : 5;
-      MOB_SPEED = (DIFF==='hard')?55 : 40;
-      ASSIST_NEED = (DIFF==='easy')?20 : (DIFF==='hard')?35 : 25;
-      assistMeterEl.textContent = `0/${ASSIST_NEED}`;
-    }
+    function buildSequence(){ const seq=[]; if(selectedStart!=='Elly NonScorreggi') seq.push(TRIeste); LEVELS_BASE.forEach(L=>seq.push(L)); return seq; }
 
     // Level build
     function buildLevel(i){
@@ -398,12 +448,60 @@
       const pts=[ {x:140,y:128},{x:220,y:118},{x:300,y:108}, {x:420,y:118},{x:500,y:108},{x:580,y:118}, {x:720,y:122},{x:800,y:112},{x:880,y:102}, {x:1040,y:118},{x:1120,y:108},{x:1200,y:118}, {x:1340,y:122},{x:1420,y:112},{x:1500,y:102}, {x:1660,y:118},{x:1740,y:108},{x:1820,y:118}, {x:1980,y:122} ];
       pts.forEach(p=>{ const plat={x:p.x,y:p.y,w:54,h:6}; solids.push(plat); platforms.push(plat); });
 
-      // power/coin blocks
-      for(let k=2;k<platforms.length;k+=3){ const p=platforms[k]; blocks.push({x:p.x+20, y:p.y-12, w:12, h:10, type:(Math.random()<0.55?'coin':'power'), hit:false, anim:0}); }
-      blocks.push({x:200,y:112,w:12,h:10,type:'power',hit:false,anim:0});
-      blocks.push({x:860,y:108,w:12,h:10,type:'coin',hit:false,anim:0});
+      // power/coin blocks (lowered and thicker head hit-box)
+          // ---- Blocchi "?" (random con distanza di sicurezza dalle piattaforme) ----
+      const BLOCK_W = 12, BLOCK_H = 10;
 
-      // small mobs
+      // overlap AABB locale
+      function ov(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+
+      function hasClearance(r){
+        // (1) nessuna intersezione con solidi/piattaforme
+        for(const s of solids){ if(ov(r,s)) return false; }
+        // (2) aria sotto per il colpo di testa (finestra 6px)
+        const under = { x:r.x+1, y:r.y+BLOCK_H, w:BLOCK_W-2, h:6 };
+        for(const s of solids){ if(ov(under,s)) return false; }
+        return true;
+      }
+
+      function tryPlaceNearPlatform(p){
+        const dxOpts  = [-28,-16,0,16,28];          // spostamento orizzontale
+        const gapOpts = [12,14,16,18,20,22];        // distanza verticale dal top piattaforma
+
+        // mescola gli array per più varietà
+        for (let i=gapOpts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [gapOpts[i],gapOpts[j]]=[gapOpts[j],gapOpts[i]]; }
+        for (let i=dxOpts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [dxOpts[i],dxOpts[j]]=[dxOpts[j],dxOpts[i]]; }
+
+        for(const gap of gapOpts){
+          for(const dx of dxOpts){
+            let rx = Math.floor(p.x + p.w/2 - BLOCK_W/2 + dx);
+            rx = Math.max(6, Math.min(levelW - BLOCK_W - 6, rx));
+            const r = {
+              x: rx,
+              y: p.y - gap - BLOCK_H,
+              w: BLOCK_W, h: BLOCK_H,
+              type: (Math.random() < 0.5 ? 'coin' : 'power'),
+              breakable: true,
+              hit:false, anim:0
+            };
+            if (hasClearance(r)){ blocks.push(r); return true; }
+          }
+        }
+        return false;
+      }
+
+      // distribuzione lungo il livello
+      let placed = 0;
+      for (let k = 1; k < platforms.length-1 && placed < 10; k += 2){
+        if (Math.random() < 0.75){
+          if (tryPlaceNearPlatform(platforms[k])) placed++;
+        }
+      }
+      // garantisci 2 blocchi accessibili a inizio livello
+      tryPlaceNearPlatform(platforms[0]);
+      if (platforms[2]) tryPlaceNearPlatform(platforms[2]);
+
+      // small mobs (count by DIFF)
       function spawnMob(x,y){ mobs.push({x,y,w:10,h:10,vx:(Math.random()<0.5?-MOB_SPEED:MOB_SPEED),vy:0,onGround:false,alive:true,t:0}); }
       const mobSpots=[360,520,760,880,1020,1160,1360,1520,1720,1880];
       for (let idx=0; idx<MOB_COUNT && idx<mobSpots.length; idx++){ spawnMob(mobSpots[idx], groundY-10); }
@@ -414,14 +512,16 @@
 
       const L=buildSeq[i]; bgKey=L.bg; currentTheme=L.theme; if (musicToggle.checked) startMusic(currentTheme,false);
       if (!L.boss){ boss=null; goal.active=true; } else { const hp=Math.max(3, Math.round(L.hp * BOSS_HP_MUL)); boss={ x:levelW-180,y:groundY-24,w:16,h:18,vx:0,vy:0,onGround:false,hp:hp,hpMax:hp,color:L.color,name:L.boss,auraT:0,wingT:0,shootT:0,pattern:L.pattern,shield:0, spoke:false }; }
-      hudLevel.textContent=`#${L.id} — ${L.loc}${L.boss ? ' — ' + L.boss : ' — Elly'}`;
-      levelStartTime=performance.now(); player.respX=20; player.respY=0;
-      player.hpMax = player.who==='Elly'? (DIFF==='easy'?7: (DIFF==='hard'?5:6)) : (DIFF==='easy'? (player.hpMax+1): (DIFF==='hard'?Math.max(4,player.hpMax-1):player.hpMax));
+      hudLevel.textContent=`#${L.id} — ${L.loc}${L.boss ? ' — ' + L.boss : ' — Elly NonScorreggi'}`;
+      levelStartTime=performance.now(); player.respX=20; player.respY=groundY - player.h;
+      // HP adjust per diff
+      player.hpMax = player.who==='Elly NonScorreggi'? (DIFF==='easy'?7: (DIFF==='hard'?5:6)) : (DIFF==='easy'? (player.hpMax+1): (DIFF==='hard'?Math.max(4,player.hpMax-1):player.hpMax));
       player.hp = player.hpMax;
       resetPlayer();
+      // tutorial item
       items.push({x:60,y:120,vx:0,vy:0,type:'extra',label:'Salto extra',t:0});
 
-      // Level cutscene with vignettes (trainer style)
+      // Level cutscene
       queueCutscene(L.loc, L.boss? [
         `${L.loc} — appare ${L.boss}!`,
         `Raccogli monete per caricare l'Assist (★).`,
@@ -430,40 +530,148 @@
         `${L.loc} — Riscaldamento!`,
         `Raccogli monete per caricare l'Assist (★).`,
         `Blocchi “?” per potenziamenti.`
-      ], player.who, L.boss || null);
+      ]);
     }
 
     // Items & powers
     function spawnCoin(x,y){ items.push({x,y,vx:0,vy:-60,type:'coin',t:0,value:10}); }
-    function spawnPower(x,y){ const types=['extra','dash','fire','inv']; const t=types[Math.floor(Math.random()*types.length)]; items.push({x,y,vx:0,vy:-60,type:t,t:0}); }
+    function spawnPower(x,y){
+        const types  = ['inv','dash','fire']; // invincibilità, super velocità, fuoco
+        const labels = { inv:'Invincibile', dash:'Super velocità', fire:'Fuoco' };
+        const t = types[Math.floor(Math.random()*types.length)];
+      items.push({ x, y, vx:0, vy:-60, type:t, label:labels[t], t:0 });
+    }
+
     function collect(it){
-      if(it.type==='coin'){ const val=Math.max(1,Math.floor(10-it.t*2)); addScore(val); addAssistCoins(1); sfx('coin'); return; }
-      if(it.type==='extra'){ powers.extraJump=12; hudPower.textContent='Salto extra (12s)'; player.jumpsLeft=player.maxJumps+1; sfx('power'); return; }
-      if(it.type==='dash'){ powers.dash=8; hudPower.textContent='Dash (8s)'; sfx('power'); return; }
-      if(it.type==='fire'){ powers.fire=10; hudPower.textContent='Fire (10s)'; sfx('power'); return; }
-      if(it.type==='inv'){ powers.inv=6; hudPower.textContent='Invincibile (6s)'; sfx('power'); return; }
+      if (it.type === 'coin'){
+        const val = 25 - Math.min(20, Math.floor(it.t * 3));
+        addScore(val); addAssistCoins(5); sfx('coin'); return;
+      }
+      if (it.type === 'inv'){    powers.inv  = 10;  hudPower.textContent = 'Invincibile (10s)';       sfx('power'); return; }
+      if (it.type === 'dash'){   powers.dash = 8;  hudPower.textContent = 'Super velocità (8s)';   sfx('power'); return; }
+      if (it.type === 'fire'){   powers.fire = 12; hudPower.textContent = 'Fuoco (12s)';           sfx('power'); return; }
     }
 
     // Boss update + dialogues
     function updateBoss(dt){
       if(!boss) return;
-      boss.auraT+=dt; boss.wingT+=dt; boss.shootT+=dt;
-      const dx=player.x-boss.x, dist=Math.abs(dx);
-      if(!bossPhase && player.x>levelW-400){ bossPhase=true; startMusic(currentTheme,true); if (!boss.spoke){ boss.spoke=true; const line = boss.name==='EvilSattola' ? ["EvilSattola: WOOF! Nessuno passa!", "Elly: Tranquillo, unirai la famiglia!"] : boss.name==='Pinni SenzaFiltri' ? ["Pinni: La verità senza filtri punge.","Elly: Pungerà il mio salto!"] : boss.name==='Pepp SenzAnalisi' ? ["Pepp: Analisi? Ma quando mai!","Elly: Vediamo se analizzi questo colpo."] : ["Ida: Le mie difese sono impenetrabili.","Elly: La famiglia trova sempre una via."]; say(line); } }
-      boss.vx=(dist<260)?Math.sign(dx)*60:0;
-      if (boss.onGround && Math.random()<0.003) boss.vy=-200;
-      if (boss.pattern==='dash'){ if (boss.shootT>1.0){ boss.shootT=0; boss.vx=Math.sign(dx)*220; boss.vy=boss.onGround?-90:boss.vy; } }
-      else if (boss.pattern==='fan'){ if (boss.shootT>1.2){ boss.shootT=0; const base=Math.atan2(player.y-boss.y, player.x-boss.x); for(let a=-0.6;a<=0.6;a+=0.3){ const sp=90; bossProj.push({x:boss.x+boss.w/2,y:boss.y+5,vx:Math.cos(base+a)*sp,vy:Math.sin(base+a)*sp,t:0,color:boss.color}); } } }
-      else if (boss.pattern==='chaos'){ if (boss.onGround && Math.random()<0.02) boss.vy=-230; if (boss.shootT>0.9){ boss.shootT=0; const sp=100; bossProj.push({x:boss.x+boss.w/2,y:boss.y+5,vx:Math.sign(dx)*sp,vy:-120,t:0,color:boss.color}); } }
-      else if (boss.pattern==='shield'){ if (boss.shootT>1.4){ boss.shootT=0; boss.shield=1.5; for(let i=0;i<6;i++){ const ang=i*(Math.PI/3); const sp=80; bossProj.push({x:boss.x+boss.w/2,y:boss.y+5,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,t:0,color:boss.color}); } } if (boss.shield>0) boss.shield-=dt; }
-      moveAndCollide(boss,dt);
-      if (aabb(player,boss) && !dialogueActive){
-        const stomp=(player.vy>0)&&(player.y+player.h-boss.y<6);
-        if (stomp){ if (boss.pattern!=='shield' || boss.shield<=0){ boss.hp-=1; sfx('hit'); } player.vy=-200; showMsg(boss.pattern==='shield'&&boss.shield>0?'Scudo!':'Colpo!',0.25); if (boss.hp<=0) onBossDefeated(); }
-        else { damagePlayer(1,false); player.vx=-Math.sign(dx)*120; player.vy=-120; }
+
+      // animazioni "soft" sempre attive
+      boss.auraT += dt;
+      boss.wingT += dt;
+
+      const dx = player.x - boss.x, dist = Math.abs(dx);
+
+      // Avvio fase boss + dialogo (tuo testo personalizzato)
+      if(!bossPhase && player.x > levelW - 400){
+        bossPhase = true;
+        startMusic(currentTheme, true);
+        if (!boss.spoke){
+          boss.spoke = true;
+          const line =
+            boss.name === 'EvilSattola' ? [
+              "EvilSattola: WOOF! Nessuno passa...se non mi dai almeno un biscottino, furfante!",
+              "Elly NonScorreggi: Tranquilla, ti unirai alla famiglia!"
+            ]
+          : boss.name === 'Pinni SenzaFiltri' ? [
+              "Pinni: La verità senza filtri punge. Resta li a Pinni!",
+              "Elly: Pungerà il mio salto, cricetino!"
+            ]
+          : boss.name === 'Pepp SenzAnalisi' ? [
+              "Pepp: Analisi? Ma quando mai!",
+              "Elly NonScorreggi: Vediamo se analizzi questo vino col percuoco."
+            ]
+          : [
+              "Ida: Le mie difese sono impenetrabili.",
+              "Elly NonScorreggi: La famiglia trova sempre una via."
+            ];
+          say(line);
+        }
+      }
+
+      // ⛔ Freeze durante i messaggi: niente movimento né pattern/attacchi
+      if (dialogueActive){
+        boss.vx = 0;
+        boss.vy = 0;
+        return; // esce prima di avanzare i timer o sparare
+      }
+
+      // I timer di attacco avanzano solo quando non c'è dialogo
+      boss.shootT += dt;
+
+      // movimento base
+      boss.vx = (dist < 260) ? Math.sign(dx) * 60 : 0;
+      if (boss.onGround && Math.random() < 0.003) boss.vy = -200;
+
+      // pattern
+      if (boss.pattern === 'dash'){
+        if (boss.shootT > 1.0){ boss.shootT = 0; boss.vx = Math.sign(dx)*220; if (boss.onGround) boss.vy = -90; }
+      }
+      else if (boss.pattern === 'fan'){
+        if (boss.shootT > 1.2){
+          boss.shootT = 0;
+          const base = Math.atan2(player.y - boss.y, player.x - boss.x);
+          for (let a = -0.6; a <= 0.6; a += 0.3){
+            const sp = 90;
+            bossProj.push({ x: boss.x + boss.w/2, y: boss.y + 5, vx: Math.cos(base+a)*sp, vy: Math.sin(base+a)*sp, t:0, color: boss.color });
+          }
+        }
+      }
+      else if (boss.pattern === 'chaos'){
+        if (boss.onGround && Math.random() < 0.02) boss.vy = -230;
+        if (boss.shootT > 0.9){
+          boss.shootT = 0;
+          const sp = 100;
+          bossProj.push({ x: boss.x + boss.w/2, y: boss.y + 5, vx: Math.sign(dx)*sp, vy: -120, t:0, color: boss.color });
+        }
+      }
+      else if (boss.pattern === 'shield'){
+        if (boss.shootT > 1.4){
+          boss.shootT = 0;
+          boss.shield = 1.5;
+          for(let i=0;i<6;i++){
+            const ang = i*(Math.PI/3), sp = 80;
+            bossProj.push({ x: boss.x + boss.w/2, y: boss.y + 5, vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp, t:0, color: boss.color });
+          }
+        }
+        if (boss.shield > 0) boss.shield -= dt;
+      }
+
+      // fisica/collisioni
+      moveAndCollide(boss, dt);
+
+      // Collisione player-boss (stomp rompe lo scudo e infligge danno)
+      if (aabb(player, boss) && !dialogueActive) {
+        const stomp = (player.vy > 0) && (player.y + player.h - boss.y < 6);
+        if (stomp) {
+          const hadShield = (boss.pattern === 'shield' && boss.shield > 0);
+          if (hadShield) boss.shield = 0;   // rompe lo scudo se attivo
+          boss.hp -= 1;
+          sfx('hit');
+          player.vy = -200;
+          showMsg(hadShield ? 'Scudo rotto!' : 'Colpo!', 0.25);
+          if (boss.hp <= 0) onBossDefeated();
+        } else {
+          damagePlayer(1, false);
+          player.vx = -Math.sign(dx) * 120;  // usa 'dx' calcolato sopra
+          player.vy = -120;
+        }
       }
     }
-    function onBossDefeated(){ allies.push({name:boss.name, portrait: portraits[boss.name]}); hudAllies.textContent=String(allies.length); addScore(100); sfx('clear'); boss=null; bossPhase=false; startMusic(currentTheme,false); goal.active=true; queueCutscene('Nuovo alleato!', [`${allies[allies.length-1].name} si unisce alla famiglia!`, `La famiglia cresce.`], player.who, allies[allies.length-1].name); }
+      function onBossDefeated(){
+        allies.push({name:boss.name, portrait: portraits[boss.name]});
+        hudAllies.textContent = String(allies.length);
+        addScore(100);
+        sfx('clear');
+        boss = null;
+        bossPhase = false;
+        startMusic(currentTheme, false);
+        goal.active = true;
+        queueCutscene('Nuovo alleato!', [
+          `${allies[allies.length-1].name} si unisce alla famiglia!`,
+          `La famiglia cresce.`
+        ]);
+      }
 
     // Small mobs
     function updateMobs(dt){
@@ -483,21 +691,78 @@
 
     // Collisions
     function aabb(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+
     function moveAndCollide(obj,dt){
-      obj.x+=obj.vx*dt;
-      for(const s of solids){ if(aabb(obj,s)){ if(obj.vx>0) obj.x=s.x-obj.w; else if(obj.vx<0) obj.x=s.x+s.w; obj.vx=0; } }
-      obj.vy+=GRAV*dt;
-      const prevY=obj.y;
-      obj.y+=obj.vy*dt; obj.onGround=false;
-      for(const s of solids){ if(aabb(obj,s)){ if(obj.vy>0){ obj.y=s.y-obj.h; obj.vy=0; obj.onGround=true; if(obj===player){ player.jumpsLeft=player.maxJumps+(powers.extraJump>0?1:0); coyote=COYOTE_MAX; } } else if(obj.vy<0){ obj.y=s.y+s.h; obj.vy=0; if(obj===player) headBump(prevY); } } }
-      if (obj===player && !obj.onGround){ coyote-=dt; if(coyote<0) coyote=0; }
-      if(obj.x<0){ obj.x=0; obj.vx=0; } if(obj.x+obj.w>levelW){ obj.x=levelW-obj.w; obj.vx=0; }
+      // orizzontale
+      obj.x += obj.vx*dt;
+      for(const s of solids){
+        if(aabb(obj,s)){
+          if(obj.vx>0) obj.x = s.x - obj.w;
+          else if(obj.vx<0) obj.x = s.x + s.w;
+          obj.vx = 0;
+        }
+      }
+
+      // verticale
+      obj.vy += GRAV*dt;
+      const prevY = obj.y;
+      obj.y += obj.vy*dt;
+      obj.onGround = false;
+
+      // ⬇️ Head-bump contro i blocchi "?" PRIMA di risolvere i soffitti solidi
+      if (obj === player && obj.vy < 0){ headBump(prevY); }
+
+      // risoluzione contro i solidi
+      for(const s of solids){
+        if(aabb(obj,s)){
+          if(obj.vy>0){
+            obj.y = s.y - obj.h; obj.vy = 0; obj.onGround = true;
+            if(obj===player){
+              player.jumpsLeft = player.maxJumps + (powers.extraJump>0?1:0);
+              coyote = COYOTE_MAX;
+            }
+          } else if(obj.vy<0){
+            obj.y = s.y + s.h; obj.vy = 0;
+            // niente headBump qui (già gestito sopra)
+          }
+        }
+      }
+
+      if (obj===player && !obj.onGround){
+        coyote -= dt; if(coyote<0) coyote = 0;
+      }
+      if(obj.x<0){ obj.x=0; obj.vx=0; }
+      if(obj.x+obj.w>levelW){ obj.x=levelW-obj.w; obj.vx=0; }
       if(obj.y>H+100){ if(obj===player){ damagePlayer(1,true); } else { obj.y=0; } }
     }
+
     function headBump(prevY){
-      if (player.vy<0){
-        const head={ x: player.x-2, y: player.y-6, w: player.w+4, h:6 };
-        for(const b of blocks){ if(!b.hit && aabb(head,b)){ b.hit=true; b.anim=1; if(b.type==='coin'){ spawnCoin(b.x,b.y-2); addAssistCoins(1); sfx('coin'); } else { spawnPower(b.x,b.y-2); sfx('power'); } } }
+      // attiva solo se si sta salendo
+      if (player.vy >= 0) return;
+
+      const topPrev = prevY;        // y prima del movimento
+      const topNow  = player.y;     // y dopo il movimento (più piccola se si sale)
+      const left    = player.x;
+      const right   = player.x + player.w;
+
+      for (const b of blocks){
+        // serve overlap orizzontale
+        if (right <= b.x || left >= b.x + b.w) continue;
+
+        // abbiamo attraversato il bordo inferiore del blocco in questo frame?
+        const bottom = b.y + b.h;
+        if (topPrev >= bottom && topNow < bottom){
+          // blocca il giocatore sotto il blocco e rilascia il contenuto
+          player.y = bottom;
+          player.vy = 0;
+
+          if (!b.hit){
+            b.hit = true; b.anim = 1;
+            if (b.type === 'coin'){ spawnCoin(b.x, b.y - 2); addAssistCoins(1); sfx('coin'); }
+            else { spawnPower(b.x, b.y - 2); sfx('power'); }
+          }
+          break;
+        }
       }
     }
 
@@ -508,7 +773,7 @@
     startBtn.addEventListener('click', ()=>{ menu.style.display='none'; select.style.display='flex'; touchLayer.style.display='block'; if(musicToggle.checked){ initAudio(); startMusic(0,false);} });
     playBtn.addEventListener('click', ()=>{
       const r=roster[selIndex]; selectedStart=r.name; DIFF=diffSel.value; applyDifficulty();
-      player.who=r.name; player.portrait=r.name.includes('Elly')?'Elly':r.name;
+      player.who=r.name; player.portrait=r.name.includes('Elly NonScorreggi')?'Elly NonScorreggi':r.name;
       player.hp=player.hpMax=r.hp;
       allies=[]; score=0; hudScore.textContent=score; hudPower.textContent='—';
       hudFamily.textContent="Acciaccatiello Family";
@@ -518,63 +783,187 @@
       buildLevel(levelIndex);
       select.style.display='none';
       setState('playing');
+      // Intro cutscene
       queueCutscene('Benvenuti!', [
         `Protagonista: ${player.who}`,
         `Difficoltà: ${DIFF}`,
         `Raccogli monete per caricare l'Assist (★). Alterna tra GigiKitchen e BeroSpero!`
-      ], player.who, null);
+      ]);
     });
     nextLevelBtn.addEventListener('click', ()=>{ levelClear.style.display='none'; levelIndex++; if(levelIndex<buildSeq.length){ buildLevel(levelIndex); setState('playing'); } else { hudFamily.textContent="Panariello Family"; finalScoreEl.textContent=score; const hi=loadHi(); hi.unshift(score); hi.sort((a,b)=>b-a); saveHi(hi); showHi(); cele.innerHTML=''; const me=portraits[player.portrait]; const c1=document.createElement('canvas'); c1.width=32;c1.height=32; c1.getContext('2d').drawImage(me,0,0,16,16,8,8,16,16); cele.appendChild(c1); allies.forEach(al=>{ const c=document.createElement('canvas'); c.width=32;c.height=32; c.getContext('2d').drawImage(al.portrait,0,0,16,16,8,8,16,16); cele.appendChild(c); }); setState('gamewon'); } });
     restartBtn.addEventListener('click', ()=>{ finalScreen.style.display='none'; menu.style.display='flex'; });
-    resumeBtn.addEventListener('click', ()=>{ pausedFlag=false; paused.style.display='none'; });
+    resumeBtn.addEventListener('click', ()=>{ pauseGame(false); });
 
     // Main loop
     function loop(ts){
       const dt=Math.min(0.033,(ts-last)/1000); last=ts;
+
+      // dialogue updates
       const talking=updateDialogue(dt);
+
       if(!pausedFlag && state==='playing'){
+        // timers
         if(powers.extraJump>0) powers.extraJump-=dt;
         if(powers.dash>0) powers.dash-=dt;
         if(powers.fire>0) powers.fire-=dt;
         if(powers.inv>0) powers.inv-=dt;
-        if (key.powerEdge){ key.powerEdge=false; if (assistReady && !talking) triggerAssist(); }
+
+        // STAR: Assist priority on edge
+        if (key.powerEdge){
+          key.powerEdge=false;
+          if (assistReady && !talking) triggerAssist();
+        }
+
+        // movement
         if(key.jumpEdge){ jumpBuf=JUMPBUF_MAX; key.jumpEdge=false; } else { jumpBuf=Math.max(0,jumpBuf-dt); }
         const ax=(key.right?1:0)-(key.left?1:0);
-        const canMove=!talking;
+        const canMove = !talking;
         player.facing=ax>=0?1:-1;
         const speedMul=(powers.dash>0 && key.power && !assistReady)?1.6:1.0;
         player.vx = canMove ? ax*MOVE_SPEED*speedMul : 0;
-        if (jumpBuf>0 && (player.onGround || coyote>0)){ player.vy=JUMP_VY; player.onGround=false; player.jumpsLeft=(player.maxJumps-1)+(powers.extraJump>0?1:0); jumpBuf=0; sfx('jump'); }
-        else if (jumpBuf>0 && player.jumpsLeft>0 && player.vy>-240){ player.vy=JUMP_VY*0.92; player.jumpsLeft-=1; jumpBuf=0; sfx('jump'); }
+
+        // jump use edge + coyote
+        if (jumpBuf>0 && (player.onGround || coyote>0)){
+          player.vy=JUMP_VY; player.onGround=false; player.jumpsLeft=(player.maxJumps-1)+(powers.extraJump>0?1:0); jumpBuf=0; sfx('jump');
+        } else if (jumpBuf>0 && player.jumpsLeft>0 && player.vy>-240){
+          player.vy=JUMP_VY*0.92; player.jumpsLeft-=1; jumpBuf=0; sfx('jump');
+        }
         if (!talking && key.attack) tryShoot();
+
         if (player.iFrames>0) player.iFrames-=dt;
         moveAndCollide(player,dt);
+
+        // mobs & boss
         updateMobs(dt);
         updateBoss(dt);
+
+        // checkpoints
         for(const cp of checkpoints){ cp.t+=dt; if(!cp.hit && aabb(player,cp)){ cp.hit=true; player.respX=cp.x; player.respY=cp.y-10; sfx('flag'); showMsg('Checkpoint!',0.6); } }
+        // goal
         goal.t+=dt; if(goal && goal.active && aabb(player,goal)) onLevelClear();
+
+        // items
         items=items.filter(it=>{ it.t+=dt; it.vy+=360*dt; it.y+=it.vy*dt; it.x+=(it.vx||0)*dt; if(aabb({x:player.x,y:player.y,w:player.w,h:player.h},{x:it.x,y:it.y,w:8,h:8})){ collect(it); return false; } for(const s of solids){ if(aabb({x:it.x,y:it.y,w:8,h:8}, s)){ it.y=s.y-8; it.vy=0; } } return it.t<12; });
-        projectiles=projectiles.filter(p=>{ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; if(boss && aabb({x:p.x,y:p.y,w:4,h:4},boss)){ if(!boss.shield||boss.shield<=0){ boss.hp-=1; sfx('hit'); if(boss.hp<=0) onBossDefeated(); } return false; } return p.t<2 && p.x>0 && p.x<levelW; });
-        bossProj=bossProj.filter(p=>{ p.t+=dt; p.vy+=120*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; if(aabb({x:p.x,y:p.y,w:4,h:4},player)){ damagePlayer(1,false); return false; } return p.t<4 && p.x>-20 && p.x<levelW+20 && p.y<H+20; });
+        // bullets
+        // proiettili (fuoco): colpiscono mob e boss, rompono lo scudo
+        projectiles = projectiles.filter(p => {
+          p.t += dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+
+          // hit sui mob
+          for (const m of mobs) {
+            if (!m.alive) continue;
+            if (aabb({x:p.x, y:p.y, w:4, h:4}, m)) {
+              m.alive = false;
+              addScore(25);
+              spawnCoin(m.x, m.y - 6);
+              addAssistCoins(1);
+              sfx('hit');
+              return false; // proiettile consumato
+            }
+          }
+
+          // hit sul boss (rompe scudo se attivo)
+          if (boss && aabb({x:p.x, y:p.y, w:4, h:4}, boss)) {
+            if (boss.pattern === 'shield' && boss.shield > 0) boss.shield = 0;
+            boss.hp -= 1;
+            sfx('hit');
+            if (boss.hp <= 0) onBossDefeated();
+            return false;
+          }
+
+          return p.t < 2 && p.x > 0 && p.x < levelW;
+        });
+
+        // proiettili del boss (come prima)
+        bossProj = bossProj.filter(p => {
+          p.t += dt;
+          p.vy += 120 * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          if (aabb({x:p.x, y:p.y, w:4, h:4}, player)) {
+            damagePlayer(1, false);
+            return false;
+          }
+          return p.t < 4 && p.x > -20 && p.x < levelW + 20 && p.y < H + 20;
+        });
+          
+
+        // camera
         cameraX=Math.max(0, Math.min(levelW-W, player.x+player.w/2 - W/2));
         hudLife.textContent = Math.round((player.hp/player.hpMax)*100) + '%';
       }
+
       // DRAW
       drawBackground(bgKey); drawParallax();
       const wx=(x)=>Math.floor(x - cameraX);
+
+      // assist flash
       if (assistFlash>0){ ctx.fillStyle=`rgba(251, 191, 36, ${assistFlash*0.4})`; ctx.fillRect(0,0,W,H); assistFlash-=0.03; }
+      // Animazione overlay Assist: chef + bero con lumino
+      if (assistAnimT > 0){
+        assistAnimPulse += dt;
+        const t = assistAnimT; 
+        assistAnimT = Math.max(0, assistAnimT - dt);
+        const prog = 1 - (t / assistAnimDur);                 // 0→1
+        const slide = Math.floor(40 * (1 - Math.cos(Math.min(prog,1)*Math.PI/2))); // ease-out
+
+        // banner semitrasparente
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = 'rgba(2,6,23,0.7)';
+        ctx.fillRect(30, 16, W-60, 44);
+
+        // chef da sinistra
+        ctx.globalAlpha = 1;
+        ctx.drawImage(portraits['GigiKitchen'], 0,0,16,16, 42 - slide, 22, 32,32);
+
+        // bero con lumino da destra + glow
+        const gx = W - 74 + slide;
+        ctx.drawImage(portraits['BeroSpero'], 0,0,16,16, gx, 22, 32,32);
+        const glow = 0.25 + 0.25*Math.sin(assistAnimPulse*10);
+        ctx.fillStyle = `rgba(251,191,36,${glow})`;           // giallo caldo
+        ctx.fillRect(gx + 22, 24, 6, 6);                      // alone della fiamma
+
+        ctx.globalAlpha = 1;
+      }
+
+      // blocks
       for(const b of blocks){ const sx=wx(b.x); if(sx<-12||sx>W+12) continue; const bob=Math.floor(b.anim*3); ctx.fillStyle=b.hit?'#374151':(b.type==='coin'?'#fbbf24':'#22c55e'); ctx.fillRect(sx,b.y-bob,b.w,b.h); if(!b.hit){ ctx.fillStyle='#0b1220'; ctx.fillRect(sx+4,b.y-bob+2,2,2); ctx.fillRect(sx+4,b.y-bob+6,2,2);} if(b.anim>0){ b.anim-=0.1; if(b.anim<0) b.anim=0; } }
+
+      // solids
       ctx.fillStyle='#0f172a'; for(const s of solids){ const sx=wx(s.x); if(sx>W||sx+s.w<0) continue; ctx.fillRect(sx,s.y,s.w,s.h); ctx.fillStyle='#1f2937'; ctx.fillRect(sx,s.y,s.w,1); ctx.fillStyle='#0f172a'; }
+
+      // items
       for(const it of items){ const sx=wx(it.x); ctx.fillStyle = it.type==='coin' ? '#fbbf24' : (it.type==='extra'?'#60a5fa': it.type==='dash'?'#34d399': it.type==='fire'?'#ef4444':'#a78bfa'); ctx.fillRect(sx,it.y,6,6); }
+
+      // mobs
       for(const m of mobs){ const sx=wx(m.x); ctx.fillStyle=m.alive?'#a3e635':'#64748b'; ctx.fillRect(sx,m.y,m.w,m.h); ctx.fillStyle='#0b1220'; ctx.fillRect(sx+3,m.y+3,2,2); }
+
+      // flags
       for(const cp of checkpoints){ const cx=wx(cp.x); const h=cp.h+Math.sin(cp.t*4)*2; ctx.fillStyle=cp.hit?'#22c55e':'#eab308'; ctx.fillRect(cx,cp.y,cp.w,h); }
       if(goal){ const gx=wx(goal.x); const h=goal.h+Math.sin(goal.t*3)*2; ctx.fillStyle=goal.active?'#22c55e':'#64748b'; ctx.fillRect(gx,goal.y,goal.w,h); }
+
+      // boss
       if(boss){ const bx=wx(boss.x); if(bx>-50 && bx<W+50){ const a=(Math.sin(boss.auraT*4)*0.5+0.5)*0.3+0.3; ctx.fillStyle='rgba(255,255,255,'+(0.08+a*0.08)+')'; ctx.fillRect(bx-3,boss.y-3,boss.w+6,boss.h+6); const flap=Math.sin(boss.wingT*8)*3; ctx.fillStyle='#94a3b8'; ctx.fillRect(bx-6,boss.y+2+flap,5,2); ctx.fillRect(bx+boss.w+1,boss.y+2-flap,5,2); ctx.fillStyle=boss.color; ctx.fillRect(bx,boss.y,boss.w,boss.h); ctx.fillStyle='#000'; ctx.fillRect(bx+3,boss.y+4,2,2); ctx.fillRect(bx+9,boss.y+4,2,2); ctx.fillStyle='#eab308'; ctx.fillRect(bx+3,boss.y-2,2,2); ctx.fillRect(bx+9,boss.y-2,2,2); ctx.drawImage(portraits[boss.name],0,0,16,16,bx-10,boss.y-20- Math.floor(Math.sin(boss.auraT*3)*2),12,12); if(boss.shield>0){ ctx.fillStyle='rgba(72,209,204,0.25)'; ctx.fillRect(bx-2,boss.y-2,boss.w+4,boss.h+4);} const bw=40,bh=4,px=bx-(bw/2 - boss.w/2),py=boss.y-8; ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(px,py,bw,bh); ctx.fillStyle=boss.color; ctx.fillRect(px,py,bw*(boss.hp/boss.hpMax),bh); } }
+
+      // boss bullets & player shots
       for(const p of bossProj){ const sx=wx(p.x); ctx.fillStyle=p.color; ctx.fillRect(sx,p.y,4,4); }
       for(const p of projectiles){ const sx=wx(p.x); ctx.fillStyle='#f87171'; ctx.fillRect(sx,p.y,4,4); }
+
+      // player
       const step=Math.sin(player.walkT += (Math.abs(player.vx)>1?0.3:0.12)); const bob=(Math.abs(player.vx)>1?(step*1.0):0);
-      ctx.globalAlpha=(powers.inv>0||player.iFrames>0)?0.6:1; const pP=portraits[player.portrait]; ctx.drawImage(pP,0,0,16,16, Math.floor(wx(player.x)-3), Math.floor(player.y-8-bob), 16,16); if (Math.abs(player.vx)>1){ ctx.fillStyle='#0f172a'; ctx.fillRect(Math.floor(wx(player.x)+2), Math.floor(player.y+6), 3,1); } ctx.globalAlpha=1; if (powers.inv>0){ ctx.fillStyle='rgba(251,191,36,0.25)'; ctx.fillRect(wx(player.x)-2, player.y-2, player.w+4, player.h+4); }
+      ctx.globalAlpha=(powers.inv>0||player.iFrames>0)?0.6:1;
+      const pP = portraits[player.portrait];
+      const drawY = Math.floor(player.y + player.h - 16); // piedi allineati al terreno
+      ctx.drawImage(pP, 0,0,16,16, Math.floor(wx(player.x)-3), drawY, 16,16);
+      if (Math.abs(player.vx)>1){ ctx.fillStyle='#0f172a'; ctx.fillRect(Math.floor(wx(player.x)+2), Math.floor(player.y+6), 3,1); }
+      ctx.globalAlpha=1;
+      if (powers.inv>0){ ctx.fillStyle='rgba(251,191,36,0.25)'; ctx.fillRect(wx(player.x)-2, player.y-2, player.w+4, player.h+4); }
+
+      // HUD
       drawHUD();
+
       sctx.imageSmoothingEnabled=false; sctx.clearRect(0,0,screen.width,screen.height); sctx.drawImage(buf,0,0,screen.width,screen.height);
       requestAnimationFrame(loop);
     }
